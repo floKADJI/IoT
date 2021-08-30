@@ -3,6 +3,14 @@
 		{
 			"name": "IoT",
 			"path": "."
+		},
+		{
+			"name": "UNO_DHT11",
+			"path": "UNO_DHT11"
+		},
+		{
+			"name": "ESP32_DHT11",
+			"path": "ESP32_DHT11"
 		}
 	],
 	"settings": {}
