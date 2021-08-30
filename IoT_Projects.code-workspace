@@ -3,6 +3,14 @@
 		{
 			"name": "IoT",
 			"path": "."
+		},
+		{
+			"name": "ESP32",
+			"path": "ESP32"
+		},
+		{
+			"name": "Arduino_UNO",
+			"path": "Arduino_UNO"
 		}
 	],
 	"settings": {}
