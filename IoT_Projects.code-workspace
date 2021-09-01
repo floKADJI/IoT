@@ -3,6 +3,10 @@
 		{
 			"name": "IoT",
 			"path": "."
+		},
+		{
+			"name": "UNO_AM2320",
+			"path": "UNO_AM2320"
 		}
 	],
 	"settings": {}
