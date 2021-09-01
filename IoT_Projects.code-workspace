@@ -7,6 +7,10 @@
 		{
 			"name": "UNO_AM2320",
 			"path": "UNO_AM2320"
+		},
+		{
+			"name": "ESP32_AM2320",
+			"path": "ESP32_AM2320"
 		}
 	],
 	"settings": {}
