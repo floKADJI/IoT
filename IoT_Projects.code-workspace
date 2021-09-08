@@ -15,6 +15,10 @@
 		{
 			"name": "ESP32_WIFI",
 			"path": "ESP32_WIFI"
+		},
+		{
+			"name": "WiFi_ClientEvents",
+			"path": "WiFi_ClientEvents"
 		}
 	],
 	"settings": {}
