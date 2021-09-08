@@ -19,9 +19,9 @@ const int INTERVAL_CONNECTION = 60000; // 1 min
  */
 void wifi_setup(){
   Serial.println();
-  //Initialisation of Connection to WiFi
+  // Initialisation of Connection to WiFi
   WiFi.begin(ssid, password);
-  Serial.printf("Connection status: %d \n", WiFi.status());
+  // Serial.printf("Connection status: %d \n", WiFi.status());
   // TODO: Find best solution
   delay(1000); // Time for connection
 
@@ -30,7 +30,7 @@ void wifi_setup(){
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
-    //  Serial.printf("Connection status: %d \n", WiFi.status());
+    Serial.printf("Connection status: %d \n", WiFi.status());
   }
 
   
@@ -43,6 +43,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);  // Just for checking, starting setup
 
+  Serial.begin(115200);   // Serial Monitor Baud rate setup
+
   // Call wifi_setup() fonction for WIFI configuration
   wifi_setup();
 
@@ -50,7 +52,10 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
+  // Starting the timer;
+  now = millis();
+  
   // Process to chek if connection WiFi connection is loss, then try to reconnect
   if (now - last_conn >= INTERVAL_CONNECTION) {
     last_conn = now;
