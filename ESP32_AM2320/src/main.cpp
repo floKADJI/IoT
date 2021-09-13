@@ -6,7 +6,7 @@
 Adafruit_AM2320 am2320 = Adafruit_AM2320();
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {
     delay(10); // hang out until serial port opens
   }
