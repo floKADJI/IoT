@@ -11,6 +11,10 @@
 		{
 			"name": "Arduino_UNO",
 			"path": "Arduino_UNO"
+		},
+		{
+			"name": "ESP32_Sensors_Display",
+			"path": "ESP32_Sensors_Display"
 		}
 	],
 	"settings": {}
