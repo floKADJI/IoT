@@ -11,20 +11,23 @@
 #include "DHT.h"
 
 
-
-
-  // For the breakout board, you can use any 2 or 3 pins.
-  // These pins will also work for the 1.8" TFT shield.
-  #define TFT_CS         5
-  #define TFT_RST        4 // Or set to -1 and connect to Arduino RESET pin
-  #define TFT_DC         2
+// These pins are setting for connection with 1.44" TFT_LCD module.
+#define TFT_CS         5
+#define TFT_RST        4 
+#define TFT_DC         2
 
 #define DHTPIN 27     // Digital pin connected to the DHT sensor
 
 #define DHTTYPE DHT11   // DHT 11
 
 
-// For 1.44" and 1.8" TFT with ST7735 use:
+// variables for time management
+unsigned long now;
+unsigned long last = 0;
+const int INTERVAL = 2000;
+
+
+// Initialize the 1.44" TFT_LCD.
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 // Initialize AM2320 sensor.
@@ -34,86 +37,59 @@ Adafruit_AM2320 am2320 = Adafruit_AM2320();
 DHT dht(DHTPIN, DHTTYPE);
 
 
-float p = 3.1415926;
-
+// Just for testing the TFT_LCD
 void tftPrintTest() {
   tft.setTextWrap(false);
   tft.fillScreen(ST77XX_BLACK);
-  tft.setCursor(0, 30);
+  tft.setCursor(0, 0);
   tft.setTextColor(ST77XX_RED);
   tft.setTextSize(1);
-  tft.println("Hello World!");
-  tft.setTextColor(ST77XX_YELLOW);
-  tft.setTextSize(2);
-  tft.println("Hello World!");
+  tft.println("Testing TFT_LCD !");
+  delay(1000);
+}
+
+/*   Function AM2320_reading_data
+  This function collects data from the AM2320 sensor and 
+  displays them on the TFT_LCD and Serial_monitor
+  Params: NULL
+  Return: NULL
+
+  TODO: JUST COLLECT DATA, and call other function for display 
+*/
+void AM2320_reading_data(){
+  //  Read relative humidity in percentage
+  float h = am2320.readHumidity();
+  //  Read temperature as Celsius (the default)
+  float t = am2320.readTemperature();
+
+  //  Send those data to Serial monitor for troubleshooting
+  Serial.println("AM2320 sensor data collected: ");
+  Serial.print("Temperature: ");  Serial.print(t);  Serial.println("°C");
+  Serial.print("Humidity: ");     Serial.print(h);  Serial.println("%");
+  Serial.println();
+
+  //  Display data collect on TFT_LCD for local checking
+  tft.setCursor(2, 10);
   tft.setTextColor(ST77XX_GREEN);
-  tft.setTextSize(3);
-  tft.println("Hello World!");
-  tft.setTextColor(ST77XX_BLUE);
-  tft.setTextSize(4);
-  tft.print(1234.567);
-  delay(1500);
-  tft.setCursor(0, 0);
-  tft.fillScreen(ST77XX_BLACK);
-  tft.setTextColor(ST77XX_WHITE);
-  tft.setTextSize(0);
-  tft.println("Hello World!");
   tft.setTextSize(1);
-  tft.setTextColor(ST77XX_GREEN);
-  tft.print(p, 6);
-  tft.println(" Want pi?");
-  tft.println(" ");
-  tft.print(8675309, HEX); // print 8,675,309 out in HEX!
-  tft.println(" Print HEX!");
-  tft.println(" ");
-  tft.setTextColor(ST77XX_WHITE);
-  tft.println("Sketch has been");
-  tft.println("running for: ");
-  tft.setTextColor(ST77XX_MAGENTA);
-  tft.print(millis() / 1000);
-  tft.setTextColor(ST77XX_WHITE);
-  tft.print(" seconds.");
+  tft.println("AM2320 sensor data collected: ");
+  tft.print("Temp: ");  tft.println(t);
+  tft.print("Hum: ");   tft.println(h);
 }
 
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
+/*   Function DHT11_reading_data
+  This function collects data from the DHT11 sensor and
+  displays them on the TFT_LCD and Serial_monitor
+  Params: NULL
+  Return: NULL
 
-  Serial.print(F("Hello! ST77xx TFT Test"));
-
-  // use this initializer if using a 1.44" TFT:
-  tft.initR(INITR_144GREENTAB); // Init ST7735R chip, green tab
-
-  Serial.println(F("Initialized"));
-
-  // tft print function!
-  tftPrintTest();
-  delay(4000);
-
-
-  Serial.println("Adafruit AM2320 Basic Test");
-  am2320.begin();
-
-  
-  Serial.println(F("DHTxx test!"));
-  dht.begin();
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-
-  delay(2000);
-
-  Serial.print("Temp: "); Serial.println(am2320.readTemperature());
-  Serial.print("Hum: "); Serial.println(am2320.readHumidity());
-
-  delay(2000);
-
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  TODO: JUST COLLECT DATA, and call other function for display 
+ */
+void DHT11_reading_date(){
+  //  Read relative humidity in percentage
   float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
+  //  Read temperature as Celsius (the default)
   float t = dht.readTemperature();
 
   // Check if any reads failed and exit early (to try again).
@@ -122,9 +98,63 @@ void loop() {
     return;
   }
 
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(t);
-  Serial.print(F("°C "));
+  Serial.println("DHT11 sensor data collected: ");
+  Serial.print("Temperature: "); Serial.print(t); Serial.println("°C");
+  Serial.print("Humidity: "); Serial.print(h); Serial.println("%");
+  Serial.println();
+
+  //  Display data collect on TFT_LCD for local checking
+  tft.setCursor(5, 10);
+  tft.setTextColor(ST77XX_GREEN);
+  tft.setTextSize(1);
+  tft.println("DHT11 sensor data collected: ");
+  tft.print("Temp: ");  tft.println(t);
+  tft.print("Hum: ");   tft.println(h);
+}
+
+void setup() {
+  // put your setup code here, to run once:
+
+  Serial.begin(115200); // Serial port configuration with Baud rate
+
+  Serial.print(F("Hello! ST77xx TFT Test"));
+
+  // use this initializer if using a 1.44" TFT:
+  tft.initR(INITR_144GREENTAB); // Init ST7735R chip, green tab
+
+  Serial.println(F("Initialized"));
+
+  //  tft print function!
+  tftPrintTest();
+  delay(4000);
+
+  //  AM2320 sensor setting up
+  Serial.println("Adafruit AM2320 Basic Test");
+  am2320.begin();
+
+  //  DHT11 sensor setting up
+  Serial.println(F("DHTxx test!"));
+  dht.begin();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  // Starting the timer;
+  now = millis();
+
+  // Wait a few seconds between measurements.
+  if (now - last >= INTERVAL) {
+     last = now;
+
+     // Clean the screen for new display
+     tft.fillScreen(ST7735_BLACK);
+
+     // Function that collect data from the AM2320 sensor.
+     AM2320_reading_data();
+
+     // Function that collect data from the DHT11 sensor.
+     DHT11_reading_date();
+  }
+  
 }
