@@ -26,6 +26,13 @@ unsigned long now;
 unsigned long last = 0;
 const int INTERVAL = 2000;
 
+// variables for temperature and humidity for comparation
+float am_t = 00.00; // old value of temperature for AM2320
+float am_h = 00.00; // old value of humidity for AM2320
+
+float dht_t = 00.00;  // old value of temperature for DHT11
+float dht_h = 00.00;  // old value of humidity for DHT11
+
 
 // Initialize the 1.44" TFT_LCD.
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
@@ -46,6 +53,46 @@ void tftPrintTest() {
   tft.setTextSize(1);
   tft.println("Testing TFT_LCD !");
   delay(1000);
+  tft.setCursor(0, 0);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.setTextSize(1);
+  tft.println("Testing TFT_LCD !");
+  // tft.fillScreen(ST7735_BLACK);
+}
+
+void drawTable(){
+
+  tft.setTextWrap(false);
+  tft.fillScreen(ST77XX_BLACK);
+
+  //  Table which displays data collect on AM2320
+      tft.setTextColor(ST77XX_GREEN);
+      tft.setCursor(0, 30);
+      tft.setTextSize(1);
+      tft.println("AM2320 sensor data ");
+      tft.setCursor(0, 40);
+      tft.print("T: ");
+    //  tft.setCursor(20, 40);
+    //  tft.setTextSize(2);  tft.print(am_t); tft.println("°C");
+      tft.setCursor(0, 60);
+      tft.setTextSize(1); tft.print("RH: ");
+    //  tft.setCursor(20, 60);
+    //  tft.setTextSize(2);   tft.print(am_h); tft.println("%");  
+
+  //  Table which displays data collect on DHT11
+      tft.setTextColor(ST77XX_YELLOW);
+      tft.setCursor(0, 80);
+      tft.setTextSize(1);
+      tft.println("DHT11 sensor data ");
+      tft.setCursor(0, 90);
+      tft.print("T: ");
+    //  tft.setCursor(20, 90);
+    //  tft.setTextSize(2);  tft.print(dht_t); tft.println("°C");
+      tft.setCursor(0, 110);
+      tft.setTextSize(1); tft.print("RH: ");
+    //  tft.setCursor(20, 110);
+    //  tft.setTextSize(2);   tft.print(dht_h); tft.println("%");
+    
 }
 
 /*   Function AM2320_reading_data
@@ -57,10 +104,32 @@ void tftPrintTest() {
   TODO: JUST COLLECT DATA, and call other function for display 
 */
 void AM2320_reading_data(){
+  
   //  Read relative humidity in percentage
   float h = am2320.readHumidity();
   //  Read temperature as Celsius (the default)
   float t = am2320.readTemperature();
+
+  // Saved old_value is compared to new_value before display
+    if( t != am_t || h != am_h ) {
+      // Clean the old value to display the new on
+      tft.setTextColor(ST77XX_BLACK);
+      tft.setCursor(20, 40);
+      tft.setTextSize(2);  tft.print(t); tft.println("°C");
+      tft.setCursor(20, 60);
+      tft.setTextSize(2);   tft.print(am_h); tft.println("%");
+
+      //  Display data collect on TFT_LCD for local checking
+      tft.setTextColor(ST77XX_GREEN);
+      tft.setCursor(20, 40);
+      tft.setTextSize(2);  tft.print(t); tft.println("°C");
+      tft.setCursor(20, 60);
+      tft.setTextSize(2);   tft.print(h); tft.println("%");
+
+      // Save old value for next
+      am_t = t;  
+      am_h = h;
+    }
 
   //  Send those data to Serial monitor for troubleshooting
   Serial.println("AM2320 sensor data collected: ");
@@ -68,15 +137,11 @@ void AM2320_reading_data(){
   Serial.print("Humidity: ");     Serial.print(h);  Serial.println("%");
   Serial.println();
 
-  //  Display data collect on TFT_LCD for local checking
-  tft.setCursor(2, 10);
-  tft.setTextColor(ST77XX_GREEN);
-  tft.setTextSize(1);
-  tft.println("AM2320 sensor data collected: ");
-  tft.print("Temp: ");  tft.println(t);
-  tft.print("Hum: ");   tft.println(h);
-}
 
+  // Save old value for next
+  // am_t = t;  
+  // am_h = h;
+}
 
 /*   Function DHT11_reading_data
   This function collects data from the DHT11 sensor and
@@ -98,18 +163,36 @@ void DHT11_reading_date(){
     return;
   }
 
+  // Saved old_value is compared to new_value before display
+    if( t != dht_t || h != dht_h ) {
+      // Clean the old value to display the new on
+      tft.setTextColor(ST77XX_BLACK);
+      tft.setCursor(20, 90);
+      tft.setTextSize(2);   tft.print(dht_t); tft.println("°C");
+      tft.setCursor(20, 110);
+      tft.setTextSize(2);   tft.print(dht_h); tft.println("%");
+
+      //  Display data collect on TFT_LCD for local checking
+      tft.setTextColor(ST77XX_YELLOW);
+      tft.setCursor(20, 90);
+      tft.setTextSize(2);  tft.print(t); tft.println("°C");
+      tft.setCursor(20, 110);
+      tft.setTextSize(2);   tft.print(h); tft.println("%");
+
+      // Save old value for next
+      dht_t = t;  
+      dht_h = h;
+    }
+
   Serial.println("DHT11 sensor data collected: ");
   Serial.print("Temperature: "); Serial.print(t); Serial.println("°C");
   Serial.print("Humidity: "); Serial.print(h); Serial.println("%");
   Serial.println();
+  
 
-  //  Display data collect on TFT_LCD for local checking
-  tft.setCursor(5, 10);
-  tft.setTextColor(ST77XX_GREEN);
-  tft.setTextSize(1);
-  tft.println("DHT11 sensor data collected: ");
-  tft.print("Temp: ");  tft.println(t);
-  tft.print("Hum: ");   tft.println(h);
+  // Save old value for next
+  // dht_t = t;  
+  // dht_h = h;
 }
 
 void setup() {
@@ -125,8 +208,8 @@ void setup() {
   Serial.println(F("Initialized"));
 
   //  tft print function!
-  tftPrintTest();
-  delay(4000);
+  drawTable();
+  delay(5000);
 
   //  AM2320 sensor setting up
   Serial.println("Adafruit AM2320 Basic Test");
@@ -148,7 +231,7 @@ void loop() {
      last = now;
 
      // Clean the screen for new display
-     tft.fillScreen(ST7735_BLACK);
+     // tft.fillScreen(ST7735_BLACK);
 
      // Function that collect data from the AM2320 sensor.
      AM2320_reading_data();
