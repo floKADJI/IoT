@@ -10,6 +10,23 @@
 
 #include "DHT.h"
 
+#include <WiFi.h>
+#include <PubSubClient.h>
+/*
+// Setting your network credentials
+const char *ssid = "AndroidAP";
+const char *password = "ap_007KJ";
+const char *mqtt_server = "192.168.43.197";
+*/
+// Setting your network credentials
+const char *ssid = "Yoomee-A1CE";           // Home network ssid = "IoT_Network"
+const char *password = "wifi_007KJ";        // Home network pwd = "password"
+const char *mqtt_server = "192.168.1.175";    // Home network server = "192.168.7.1"
+
+// Initializes the espClient
+WiFiClient espClient;
+PubSubClient client(espClient);
+
 
 // These pins are setting for connection with 1.44" TFT_LCD module.
 #define TFT_CS         5
@@ -60,6 +77,7 @@ void tftPrintTest() {
   // tft.fillScreen(ST7735_BLACK);
 }
 
+// Just for drawing the table on the TFT_LCD
 void drawTable(){
 
   tft.setTextWrap(false);
@@ -126,6 +144,17 @@ void AM2320_reading_data(){
       tft.setCursor(20, 60);
       tft.setTextSize(2);   tft.print(h); tft.println("%");
 
+
+      // Convert data in String format for transmission with MQTT protocol
+      static char temperatureTemp[7];
+      dtostrf(t, 6, 2, temperatureTemp);
+      static char humidityTemp[7];
+      dtostrf(h, 6, 2, humidityTemp);
+
+      // Send data to Raspberry Pi for broker
+      client.publish("megatec/sat1/AM2320/temperature", temperatureTemp);
+      client.publish("megatec/sat1/AM2320/humidity", humidityTemp);
+
       // Save old value for next
       am_t = t;  
       am_h = h;
@@ -179,6 +208,17 @@ void DHT11_reading_date(){
       tft.setCursor(20, 110);
       tft.setTextSize(2);   tft.print(h); tft.println("%");
 
+
+      // Convert data in String format for transmission with MQTT protocol
+      static char temperatureTemp[7];
+      dtostrf(t, 6, 2, temperatureTemp);
+      static char humidityTemp[7];
+      dtostrf(h, 6, 2, humidityTemp);
+
+      // Send data to Raspberry Pi for broker
+      client.publish("megatec/sat1/DHT11/temperature", temperatureTemp);
+      client.publish("megatec/sat1/DHT11/humidity", humidityTemp);
+
       // Save old value for next
       dht_t = t;  
       dht_h = h;
@@ -193,6 +233,57 @@ void DHT11_reading_date(){
   // Save old value for next
   // dht_t = t;  
   // dht_h = h;
+}
+
+
+void wifi_setup(){
+  Serial.println();
+  //Initialisation of Connection to WiFi
+  WiFi.begin(ssid, password);
+  //Serial.printf("Connection status: %d \n", WiFi.status());
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(" . ");
+    Serial.printf("Connection status: %d \n", WiFi.status());
+  }
+
+  // Print local IP address & start ...
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+
+    if (client.connect("espClient")) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("outTopic", "hello world");
+      // ... and resubscribe
+      client.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
 }
 
 void setup() {
@@ -218,10 +309,22 @@ void setup() {
   //  DHT11 sensor setting up
   Serial.println(F("DHTxx test!"));
   dht.begin();
+
+  // Setup WiFi configuration
+  wifi_setup();
+  // Setup MQTT configuration
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+   if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
 
   // Starting the timer;
   now = millis();
