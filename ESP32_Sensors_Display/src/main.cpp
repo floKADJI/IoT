@@ -10,6 +10,15 @@
 
 #include "DHT.h"
 
+#include <WiFi.h> // Library for WiFi
+
+// Setting your network credentials
+const char *ssid = "AndroidAP";
+const char *password = "ap_007KJ";
+//const char *mqtt_server = "192.168.43.197";
+
+boolean Wifi_flag = false; // Flag linked to connection to AP
+
 
 // These pins are setting for connection with 1.44" TFT_LCD module.
 #define TFT_CS         5
@@ -20,11 +29,19 @@
 
 #define DHTTYPE DHT11   // DHT 11
 
+// Constant of color
+#define BG_color ST77XX_BLACK
+#define Text_color_1 ST77XX_GREEN
+#define Text_color_2 ST77XX_YELLOW
 
 // variables for time management
 unsigned long now;
+unsigned long current;
 unsigned long last = 0;
-const int INTERVAL = 2000;
+const int INTERVAL = 2000;   // Time between data collection
+
+unsigned long last_conn = 0;  // Time between reconnection to AP, if it's lost
+const int INTERVAL_CONNECTION = 60000; // 1 min
 
 // variables for temperature and humidity for comparation
 float am_t = 00.00; // old value of temperature for AM2320
@@ -47,14 +64,14 @@ DHT dht(DHTPIN, DHTTYPE);
 // Just for testing the TFT_LCD
 void tftPrintTest() {
   tft.setTextWrap(false);
-  tft.fillScreen(ST77XX_BLACK);
+  tft.fillScreen(BG_color);
   tft.setCursor(0, 0);
   tft.setTextColor(ST77XX_RED);
   tft.setTextSize(1);
   tft.println("Testing TFT_LCD !");
   delay(1000);
   tft.setCursor(0, 0);
-  tft.setTextColor(ST77XX_BLACK);
+  tft.setTextColor(BG_color);
   tft.setTextSize(1);
   tft.println("Testing TFT_LCD !");
   // tft.fillScreen(ST7735_BLACK);
@@ -63,33 +80,37 @@ void tftPrintTest() {
 void drawTable(){
 
   tft.setTextWrap(false);
-  tft.fillScreen(ST77XX_BLACK);
+  tft.fillScreen(BG_color);
 
   //  Table which displays data collect on AM2320
-      tft.setTextColor(ST77XX_GREEN);
+      tft.setTextColor(Text_color_1);
       tft.setCursor(0, 30);
       tft.setTextSize(1);
       tft.println("AM2320 sensor data ");
       tft.setCursor(0, 40);
-      tft.print("T: ");
+      tft.setTextSize(2);
+      tft.print("T");
     //  tft.setCursor(20, 40);
     //  tft.setTextSize(2);  tft.print(am_t); tft.println("°C");
       tft.setCursor(0, 60);
-      tft.setTextSize(1); tft.print("RH: ");
+      tft.setTextSize(2);
+      tft.print("RH");
     //  tft.setCursor(20, 60);
     //  tft.setTextSize(2);   tft.print(am_h); tft.println("%");  
 
   //  Table which displays data collect on DHT11
-      tft.setTextColor(ST77XX_YELLOW);
+      tft.setTextColor(Text_color_2);
       tft.setCursor(0, 80);
       tft.setTextSize(1);
       tft.println("DHT11 sensor data ");
+      tft.setTextSize(2);
       tft.setCursor(0, 90);
-      tft.print("T: ");
+      tft.print("T");
     //  tft.setCursor(20, 90);
     //  tft.setTextSize(2);  tft.print(dht_t); tft.println("°C");
       tft.setCursor(0, 110);
-      tft.setTextSize(1); tft.print("RH: ");
+      tft.setTextSize(2);
+      tft.print("RH");
     //  tft.setCursor(20, 110);
     //  tft.setTextSize(2);   tft.print(dht_h); tft.println("%");
     
@@ -100,7 +121,7 @@ void drawTable(){
   displays them on the TFT_LCD and Serial_monitor
   Params: NULL
   Return: NULL
-
+  Modified: am_t, am_h
   TODO: JUST COLLECT DATA, and call other function for display 
 */
 void AM2320_reading_data(){
@@ -110,20 +131,26 @@ void AM2320_reading_data(){
   //  Read temperature as Celsius (the default)
   float t = am2320.readTemperature();
 
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println(F("Failed to read from AM2320 sensor!"));
+    return;
+  }
+
   // Saved old_value is compared to new_value before display
     if( t != am_t || h != am_h ) {
       // Clean the old value to display the new on
-      tft.setTextColor(ST77XX_BLACK);
-      tft.setCursor(20, 40);
-      tft.setTextSize(2);  tft.print(t); tft.println("°C");
-      tft.setCursor(20, 60);
-      tft.setTextSize(2);   tft.print(am_h); tft.println("%");
+      tft.setTextColor(BG_color);
+      tft.setCursor(30, 40);
+      tft.setTextSize(2);  tft.print(am_t); tft.println("Deg");
+      tft.setCursor(30, 60);
+      tft.setTextSize(2);  tft.print(am_h); tft.println("%");
 
       //  Display data collect on TFT_LCD for local checking
-      tft.setTextColor(ST77XX_GREEN);
-      tft.setCursor(20, 40);
-      tft.setTextSize(2);  tft.print(t); tft.println("°C");
-      tft.setCursor(20, 60);
+      tft.setTextColor(Text_color_1);
+      tft.setCursor(30, 40);
+      tft.setTextSize(2);  tft.print(t); tft.println("Deg");
+      tft.setCursor(30, 60);
       tft.setTextSize(2);   tft.print(h); tft.println("%");
 
       // Save old value for next
@@ -137,10 +164,6 @@ void AM2320_reading_data(){
   Serial.print("Humidity: ");     Serial.print(h);  Serial.println("%");
   Serial.println();
 
-
-  // Save old value for next
-  // am_t = t;  
-  // am_h = h;
 }
 
 /*   Function DHT11_reading_data
@@ -148,7 +171,7 @@ void AM2320_reading_data(){
   displays them on the TFT_LCD and Serial_monitor
   Params: NULL
   Return: NULL
-
+  Modified: dht_t, dht_h
   TODO: JUST COLLECT DATA, and call other function for display 
  */
 void DHT11_reading_date(){
@@ -166,17 +189,17 @@ void DHT11_reading_date(){
   // Saved old_value is compared to new_value before display
     if( t != dht_t || h != dht_h ) {
       // Clean the old value to display the new on
-      tft.setTextColor(ST77XX_BLACK);
-      tft.setCursor(20, 90);
-      tft.setTextSize(2);   tft.print(dht_t); tft.println("°C");
-      tft.setCursor(20, 110);
+      tft.setTextColor(BG_color);
+      tft.setCursor(30, 90);
+      tft.setTextSize(2);   tft.print(dht_t); tft.println("Deg");
+      tft.setCursor(30, 110);
       tft.setTextSize(2);   tft.print(dht_h); tft.println("%");
 
       //  Display data collect on TFT_LCD for local checking
-      tft.setTextColor(ST77XX_YELLOW);
-      tft.setCursor(20, 90);
-      tft.setTextSize(2);  tft.print(t); tft.println("°C");
-      tft.setCursor(20, 110);
+      tft.setTextColor(Text_color_2);
+      tft.setCursor(30, 90);
+      tft.setTextSize(2);  tft.print(t); tft.println("Deg");
+      tft.setCursor(30, 110);
       tft.setTextSize(2);   tft.print(h); tft.println("%");
 
       // Save old value for next
@@ -188,12 +211,49 @@ void DHT11_reading_date(){
   Serial.print("Temperature: "); Serial.print(t); Serial.println("°C");
   Serial.print("Humidity: "); Serial.print(h); Serial.println("%");
   Serial.println();
-  
 
-  // Save old value for next
-  // dht_t = t;  
-  // dht_h = h;
 }
+
+
+/*  Function Wifi_setup()
+  This function try to connect to AP, if available
+  It use the global variable of connection credential
+  Params: NULL
+  Return: NULL
+
+  TODO: ENABLE USER TO ENTER HIS OWN CREDENTIALS
+*/
+void wifi_setup(){
+  current = millis();
+
+  Serial.println();
+  //  Initialisation of Connection to WiFi
+  WiFi.begin(ssid, password);
+  //  Serial.printf("Connection status: %d \n", WiFi.status());
+
+  // TODO: Find best solution
+  /* // Time for connection
+
+  if (current - last_conn >= INTERVAL_CONNECTION) {
+    last_conn = current;
+
+    // Print local IP address & start ...
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+
+  }
+  */
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Wifi_flag = false;
+    delay(1000);
+    Serial.print(" . ");
+    Serial.printf("Connection status: %d \n", WiFi.status());
+  }
+  
+}
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -218,6 +278,9 @@ void setup() {
   //  DHT11 sensor setting up
   Serial.println(F("DHTxx test!"));
   dht.begin();
+
+  // Setup WiFi configuration
+  wifi_setup();
 }
 
 void loop() {
@@ -238,6 +301,19 @@ void loop() {
 
      // Function that collect data from the DHT11 sensor.
      DHT11_reading_date();
+  }
+
+  // Wait a few seconds, then retry to connect at AP if connection loss
+  if (now - last_conn >= INTERVAL_CONNECTION) {
+    last_conn = now;
+
+    // Check connection
+    if (WiFi.status() != WL_CONNECTED) {
+      wifi_setup();
+      Serial.println(".");
+    //  Serial.printf("Connection status: %d \n", WiFi.status());
+    }
+
   }
   
 }
