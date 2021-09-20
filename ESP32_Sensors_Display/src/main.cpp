@@ -17,7 +17,8 @@ const char *ssid = "AndroidAP";
 const char *password = "ap_007KJ";
 //const char *mqtt_server = "192.168.43.197";
 
-boolean Wifi_flag = false; // Flag linked to connection to AP
+boolean connecting = false; // Flag for connecting progress
+boolean connected = false; // Flag for connection done
 
 
 // These pins are setting for connection with 1.44" TFT_LCD module.
@@ -30,9 +31,10 @@ boolean Wifi_flag = false; // Flag linked to connection to AP
 #define DHTTYPE DHT11   // DHT 11
 
 // Constant of color
-#define BG_color ST77XX_BLACK
-#define Text_color_1 ST77XX_GREEN
-#define Text_color_2 ST77XX_YELLOW
+#define BG_color      ST77XX_BLACK
+#define Text_color_1  ST77XX_GREEN
+#define Text_color_2  ST77XX_YELLOW
+#define Text_color_3  ST77XX_RED
 
 // variables for time management
 unsigned long now;
@@ -61,26 +63,30 @@ Adafruit_AM2320 am2320 = Adafruit_AM2320();
 DHT dht(DHTPIN, DHTTYPE);
 
 
-// Just for testing the TFT_LCD
+// Just the text for the header on the TFT_LCD
 void tftPrintTest() {
   tft.setTextWrap(false);
   tft.fillScreen(BG_color);
   tft.setCursor(0, 0);
-  tft.setTextColor(ST77XX_RED);
+  tft.setTextColor(Text_color_3);
   tft.setTextSize(1);
-  tft.println("Testing TFT_LCD !");
+  tft.println("Regenord/MEGATEC");
   delay(1000);
-  tft.setCursor(0, 0);
-  tft.setTextColor(BG_color);
-  tft.setTextSize(1);
-  tft.println("Testing TFT_LCD !");
-  // tft.fillScreen(ST7735_BLACK);
+  
 }
 
+// The table were the data collected will be display
 void drawTable(){
 
   tft.setTextWrap(false);
   tft.fillScreen(BG_color);
+  // The header text on the TFT_LCD
+  tft.setCursor(10, 0);
+  tft.setTextColor(ST77XX_RED);
+  tft.setTextSize(2);
+  tft.println("REGENORD"); // MEGATEC");
+  tft.setCursor(20, 15);
+  tft.println("MEGATEC");
 
   //  Table which displays data collect on AM2320
       tft.setTextColor(Text_color_1);
@@ -220,7 +226,7 @@ void DHT11_reading_date(){
   It use the global variable of connection credential
   Params: NULL
   Return: NULL
-
+  Modified: connecting & connected
   TODO: ENABLE USER TO ENTER HIS OWN CREDENTIALS
 */
 void wifi_setup(){
@@ -229,6 +235,9 @@ void wifi_setup(){
   Serial.println();
   //  Initialisation of Connection to WiFi
   WiFi.begin(ssid, password);
+  // just start connecting progress
+  connecting = true;
+  connected = false;
   //  Serial.printf("Connection status: %d \n", WiFi.status());
 
   // TODO: Find best solution
@@ -246,7 +255,7 @@ void wifi_setup(){
   */
 
   if (WiFi.status() != WL_CONNECTED) {
-    Wifi_flag = false;
+    connected = false;
     delay(1000);
     Serial.print(" . ");
     Serial.printf("Connection status: %d \n", WiFi.status());
@@ -268,6 +277,7 @@ void setup() {
   Serial.println(F("Initialized"));
 
   //  tft print function!
+  tftPrintTest();
   drawTable();
   delay(5000);
 
@@ -279,8 +289,10 @@ void setup() {
   Serial.println(F("DHTxx test!"));
   dht.begin();
 
+  /*
   // Setup WiFi configuration
   wifi_setup();
+  */
 }
 
 void loop() {
@@ -303,17 +315,40 @@ void loop() {
      DHT11_reading_date();
   }
 
+
+
+  
+  //  TODO: MANAGE WIFI CONNECTION PROGRESS THERE
+
   // Wait a few seconds, then retry to connect at AP if connection loss
   if (now - last_conn >= INTERVAL_CONNECTION) {
     last_conn = now;
 
-    // Check connection
-    if (WiFi.status() != WL_CONNECTED) {
-      wifi_setup();
-      Serial.println(".");
-    //  Serial.printf("Connection status: %d \n", WiFi.status());
+    if(connecting){
+      // if Connecting progress is ongoing just check connection status
+      // Decrement one counter, if reach zero (0) connection timeout
+      if (WiFi.status() == WL_CONNECTED) {
+        connected = true; // Connection done
+        connecting = false;
+        // Must activate CONNECTION TIMEOUT
+      }
+    } else {
+      // Need to start the connecting progress
+      // Setup WiFi configuration
+      if(!connected){
+        // Starting wifi connection
+         wifi_setup();
+        // updated flag
+         connecting = true;
+         connected = false;
+      } else {
+        // updated flag
+        connecting = false;
+        if(WiFi.status() != WL_CONNECTED){
+          connected = false; 
+        }
+      }
+     
     }
-
-  }
   
 }
