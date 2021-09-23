@@ -11,6 +11,14 @@
 		{
 			"name": "Arduino_UNO",
 			"path": "Arduino_UNO"
+		},
+		{
+			"name": "UNO_SD",
+			"path": "UNO_SD"
+		},
+		{
+			"name": "ESP32_SD",
+			"path": "ESP32_SD"
 		}
 	],
 	"settings": {}
