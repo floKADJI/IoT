@@ -19,6 +19,10 @@
 		{
 			"name": "ESP32_SD",
 			"path": "ESP32_SD"
+		},
+		{
+			"name": "ESP32_DHT11_SD",
+			"path": "ESP32_DHT11_SD"
 		}
 	],
 	"settings": {}
