@@ -19,6 +19,10 @@
 		{
 			"name": "WiFi_ClientEvents",
 			"path": "WiFi_ClientEvents"
+		},
+		{
+			"name": "ESP32_WiFi_MQTT",
+			"path": "ESP32_WiFi_MQTT"
 		}
 	],
 	"settings": {}
