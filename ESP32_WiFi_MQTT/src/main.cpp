@@ -68,7 +68,10 @@ void reconnect() {
       // Once connected, publish an announcement...
       //  client.publish("outTopic", "hello world");
       // ... and resubscribe
-      client.subscribe("megatec/config");
+      boolean config = client.subscribe("megatec/config");
+      if(config){
+        Serial.println("Registered to topic: megatec/config");
+      }
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -98,6 +101,11 @@ void setup() {
 }
 
 void loop() {
+
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
   
   // Starting the timer;
   now = millis();
