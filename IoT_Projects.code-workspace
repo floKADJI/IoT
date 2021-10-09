@@ -23,6 +23,10 @@
 		{
 			"name": "ESP32_WiFi_MQTT",
 			"path": "ESP32_WiFi_MQTT"
+		},
+		{
+			"name": "ESP32_WIFI_AsyncMQTT",
+			"path": "ESP32_WIFI_AsyncMQTT"
 		}
 	],
 	"settings": {}
