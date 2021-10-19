@@ -3,6 +3,10 @@
 		{
 			"name": "IoT",
 			"path": "."
+		},
+		{
+			"name": "ESP32_AHT21",
+			"path": "ESP32_AHT21"
 		}
 	],
 	"settings": {}
