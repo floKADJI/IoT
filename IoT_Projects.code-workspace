@@ -3,6 +3,10 @@
 		{
 			"name": "IoT",
 			"path": "."
+		},
+		{
+			"name": "ESP32_PCF8583",
+			"path": "ESP32_PCF8583"
 		}
 	],
 	"settings": {}
