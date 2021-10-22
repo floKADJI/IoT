@@ -16,7 +16,8 @@ void setup() {
 
     Serial.begin(115200);
 
-    rtc.setTime(0, 10, 20);
+//    rtc.setTime(0, 10, 20);
+    rtc.setDate(5,3,2010);
     assertEquals("getSeconds", 0, rtc.getSecond());
     assertEquals("getMinutes", 10, rtc.getMinute());
     assertEquals("getHours", 20, rtc.getHour());
@@ -26,4 +27,15 @@ void setup() {
 
 }
 
-void loop() {}
+void loop() {
+    Serial.print(rtc.getHour());
+    Serial.printf(":");
+    Serial.print(rtc.getMinute());
+    Serial.printf(":");
+    Serial.println(rtc.getSecond());
+    delay(1000);
+
+    Serial.println(rtc.getWeekday());
+    delay(500);
+    Serial.println(rtc.getDay());
+}
