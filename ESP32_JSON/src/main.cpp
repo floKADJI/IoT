@@ -1,68 +1,64 @@
-// This example shows the different ways you can use String with ArduinoJson.
 //
-// Use String objects sparingly, because ArduinoJson duplicates them in the
-// JsonDocument. Prefer plain old char[], as they are more efficient in term of
-// code size, speed, and memory usage.
+// This example shows how to deserialize a JSON document with ArduinoJson.
 //
-// https://arduinojson.org/v6/example/string/
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-String output;
-
 void setup() {
+  // Initialize serial port
   Serial.begin(115200);
+  while (!Serial) continue;
 
-  DynamicJsonDocument doc(1024);
+  // Allocate the JSON document
+  //
+  // Inside the brackets, 200 is the capacity of the memory pool in bytes.
+  // Don't forget to change this value to match your JSON document.
+  // Use https://arduinojson.org/v6/assistant to compute the capacity.
+  StaticJsonDocument<200> doc;
 
-  // You can use a String as your JSON input.
-  // WARNING: the string in the input  will be duplicated in the JsonDocument.
-  String input =
+  // StaticJsonDocument<N> allocates memory on the stack, it can be
+  // replaced by DynamicJsonDocument which allocates in the heap.
+  //
+  // DynamicJsonDocument doc(200);
+
+  // JSON input string.
+  //
+  // Using a char[], as shown here, enables the "zero-copy" mode. This mode uses
+  // the minimal amount of memory because the JsonDocument stores pointers to
+  // the input buffer.
+  // If you use another type of input, ArduinoJson must copy the strings from
+  // the input to the JsonDocument, so you need to increase the capacity of the
+  // JsonDocument.
+  char json[] =
       "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";
-  deserializeJson(doc, input);
-  JsonObject obj = doc.as<JsonObject>();
 
-  // You can use a String to get an element of a JsonObject
-  // No duplication is done.
-  long time = obj[String("time")];
+  // Deserialize the JSON document
+  DeserializationError error = deserializeJson(doc, json);
 
-  // You can use a String to set an element of a JsonObject
-  // WARNING: the content of the String will be duplicated in the JsonDocument.
-  obj[String("time")] = time;
-
-  // You can get a String from a JsonObject or JsonArray:
-  // No duplication is done, at least not in the JsonDocument.
-  String sensor = obj["sensor"];
-
-  // Unfortunately, the following doesn't work (issue #118):
-  // sensor = obj["sensor"]; // <-  error "ambiguous overload for 'operator='"
-  // As a workaround, you need to replace by:
-  sensor = obj["sensor"].as<String>();
-
-  // You can set a String to a JsonObject or JsonArray:
-  // WARNING: the content of the String will be duplicated in the JsonDocument.
-  obj["sensor"] = sensor;
-
-  // It works with serialized() too:
-  obj["sensor"] = serialized(sensor);
-
-  // You can also concatenate strings
-  // WARNING: the content of the String will be duplicated in the JsonDocument.
-  obj[String("sen") + "sor"] = String("gp") + "s";
-
-  // You can compare the content of a JsonObject with a String
-  if (obj["sensor"] == sensor) {
-    // ...
+  // Test if parsing succeeds.
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
   }
 
-  // Lastly, you can print the resulting JSON to a String
-  //String output;
-  serializeJson(doc, output);
+  // Fetch values.
+  //
+  // Most of the time, you can rely on the implicit casts.
+  // In other case, you can do doc["time"].as<long>();
+  const char* sensor = doc["sensor"];
+  long time = doc["time"];
+  double latitude = doc["data"][0];
+  double longitude = doc["data"][1];
+
+  // Print values.
+  Serial.println(sensor);
+  Serial.println(time);
+  Serial.println(latitude, 6);
+  Serial.println(longitude, 6);
 }
 
 void loop() {
   // not used in this example
-  Serial.println(output);
-  delay(10000);
 }
