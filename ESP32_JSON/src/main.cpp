@@ -1,62 +1,59 @@
 //
-// This example shows how to deserialize a JSON document with ArduinoJson.
+// This example shows how to generate a JSON document with ArduinoJson.
 //
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
 void setup() {
-  // Initialize serial port
+  // Initialize Serial port
   Serial.begin(115200);
   while (!Serial) continue;
 
   // Allocate the JSON document
   //
-  // Inside the brackets, 200 is the capacity of the memory pool in bytes.
-  // Don't forget to change this value to match your JSON document.
+  // Inside the brackets, 200 is the RAM allocated to this document.
+  // Don't forget to change this value to match your requirement.
   // Use https://arduinojson.org/v6/assistant to compute the capacity.
   StaticJsonDocument<200> doc;
 
-  // StaticJsonDocument<N> allocates memory on the stack, it can be
+  // StaticJsonObject allocates memory on the stack, it can be
   // replaced by DynamicJsonDocument which allocates in the heap.
   //
-  // DynamicJsonDocument doc(200);
+  // DynamicJsonDocument  doc(200);
 
-  // JSON input string.
+  // Add values in the document
   //
-  // Using a char[], as shown here, enables the "zero-copy" mode. This mode uses
-  // the minimal amount of memory because the JsonDocument stores pointers to
-  // the input buffer.
-  // If you use another type of input, ArduinoJson must copy the strings from
-  // the input to the JsonDocument, so you need to increase the capacity of the
-  // JsonDocument.
-  char json[] =
-      "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";
+  doc["sensor"] = "gps";
+  doc["time"] = 1351824120;
 
-  // Deserialize the JSON document
-  DeserializationError error = deserializeJson(doc, json);
-
-  // Test if parsing succeeds.
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-
-  // Fetch values.
+  // Add an array.
   //
-  // Most of the time, you can rely on the implicit casts.
-  // In other case, you can do doc["time"].as<long>();
-  const char* sensor = doc["sensor"];
-  long time = doc["time"];
-  double latitude = doc["data"][0];
-  double longitude = doc["data"][1];
+  JsonArray data = doc.createNestedArray("data");
+  data.add(48.756080);
+  data.add(2.302038);
 
-  // Print values.
-  Serial.println(sensor);
-  Serial.println(time);
-  Serial.println(latitude, 6);
-  Serial.println(longitude, 6);
+  // Generate the minified JSON and send it to the Serial port.
+  //
+  serializeJson(doc, Serial);
+  // The above line prints:
+  // {"sensor":"gps","time":1351824120,"data":[48.756080,2.302038]}
+
+  // Start a new line
+  Serial.println();
+
+  // Generate the prettified JSON and send it to the Serial port.
+  //
+  serializeJsonPretty(doc, Serial);
+  // The above line prints:
+  // {
+  //   "sensor": "gps",
+  //   "time": 1351824120,
+  //   "data": [
+  //     48.756080,
+  //     2.302038
+  //   ]
+  // }
 }
 
 void loop() {
