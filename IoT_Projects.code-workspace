@@ -11,6 +11,10 @@
 		{
 			"name": "Arduino_UNO",
 			"path": "Arduino_UNO"
+		},
+		{
+			"name": "ESP32_TFT",
+			"path": "ESP32_TFT"
 		}
 	],
 	"settings": {}
