@@ -23,6 +23,10 @@
 		{
 			"name": "ESP32_DHT11_SD",
 			"path": "ESP32_DHT11_SD"
+		},
+		{
+			"name": "ESP32_SPIFFS",
+			"path": "ESP32_SPIFFS"
 		}
 	],
 	"settings": {}
