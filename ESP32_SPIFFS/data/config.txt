@@ -1,0 +1,9 @@
+ssid="AndroidAP";
+password="ap_007KJ";
+mqtt_server="192.168.43.168";
+    
+mqtt_id="satellite";
+sat_name="satellite";  // Modif for Sat1
+mqtt_topic="home/room/DATA";   // Modif for Sat1
+mqtt_conf_topic="home/room/CONFIG";  //Modif for Sat1
+mqtt_port=1883;
